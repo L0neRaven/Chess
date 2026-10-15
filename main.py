@@ -18,6 +18,15 @@ def xy_to_file_rank(x, y):
 
 
 class Board:
+    pieces = []
+    turn = "w"
+    castles = "KQkq"
+    en_passant = "-"
+    half_moves = 0
+    full_moves = 1
+    fen_dict = defaultdict(int)
+    move_history = []
+
     class Piece:
         symbol = "-"
         pos = "-"
@@ -195,18 +204,47 @@ class Board:
         begin = ""
         end = ""
         castle = ""
-        checkmate = False
+        takes = False
         check = False
+        checkmate = False
         promotion = ""
 
-    pieces = []
-    turn = "w"
-    castles = "KQkq"
-    en_passant = "-"
-    half_moves = 0
-    full_moves = 1
-    fen_dict = defaultdict(int)
-    move_history = []
+        def __str__(self):
+            return f"text: {self.text}\npiece: {self.piece}\nbegin: {self.begin}\nend: {self.end}\ncastle: {self.castle}\ntakes: {self.takes}\ncheck: {self.check}\ncheckmate: {self.checkmate}\npromotion: {self.promotion}"
+
+        def __init__(self, move, board):
+            self.text = move
+            if move[-1] == "#":
+                self.checkmate = True
+                move = move[:-1]
+            elif move[-1] == "+":
+                self.check = True
+                move = move[:-1]
+            if move[-2] == "=":
+                self.promotion = move[-1]
+                move = move[-2]
+            if move == "O-O" or move == "O-O-O":
+                if board.turn == "w":
+                    if move == "O-O":
+                        self.castle = "K"
+                    else:
+                        self.castle = "Q"
+                elif move == "O-O":
+                    self.castle = "k"
+                else:
+                    self.castle = "q"
+            self.end = move[-2:]
+            move = move[:-2]
+            if move[0] in ['R', 'N', 'B', 'Q', 'K', 'r', 'n', 'b', 'q', 'k']:
+                self.piece = move[0]
+                move = move[1:]
+            elif board.turn == "w":
+                self.piece = 'P'
+            else:
+                self.piece = 'p'
+            if move[-1] == "x":
+                self.takes = True
+                move = move[:-1]
 
     def readFEN(self, fen):
         self.fen_dict[fen[:-4]] += 1
@@ -261,3 +299,5 @@ if __name__ == '__main__':
     print(b)
     for p in b.pieces:
         print(p, p.reachable_tiles_and_attackable_pieces(b))
+    m = Board.Move("Bxc6", b)
+    print(m)
