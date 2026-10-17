@@ -204,16 +204,24 @@ class Board:
         begin = ""
         end = ""
         castle = ""
+        en_passant = ""
+        white = True
         takes = False
         check = False
         checkmate = False
         promotion = ""
 
         def __str__(self):
-            return f"text: {self.text}\npiece: {self.piece}\nbegin: {self.begin}\nend: {self.end}\ncastle: {self.castle}\ntakes: {self.takes}\ncheck: {self.check}\ncheckmate: {self.checkmate}\npromotion: {self.promotion}"
+            return self.text
 
         def __init__(self, move, board):
             self.text = move
+            self.white = board.turn == "w"
+            if board.en_passant != "-":
+                if board.en_passant[1] == "3":
+                    self.en_passant = board.en_passant[0] + "4"
+                else:
+                    self.en_passant = board.en_passant[0] + "5"
             if move[-1] == "#":
                 self.checkmate = True
                 move = move[:-1]
@@ -224,6 +232,7 @@ class Board:
                 self.promotion = move[-1]
                 move = move[-2]
             if move == "O-O" or move == "O-O-O":
+                self.piece = "K"
                 if board.turn == "w":
                     if move == "O-O":
                         self.castle = "K"
@@ -235,16 +244,50 @@ class Board:
                     self.castle = "q"
             self.end = move[-2:]
             move = move[:-2]
-            if move[0] in ['R', 'N', 'B', 'Q', 'K', 'r', 'n', 'b', 'q', 'k']:
+            if move[0] in ['R', 'N', 'B', 'Q', 'K']:
                 self.piece = move[0]
                 move = move[1:]
-            elif board.turn == "w":
-                self.piece = 'P'
             else:
-                self.piece = 'p'
+                self.piece = 'P'
             if move[-1] == "x":
                 self.takes = True
                 move = move[:-1]
+            if len(move) > 0:
+                self.begin = move
+            for piece in board.pieces:
+                [r, a] = piece.reachable_tiles_and_attackable_pieces(board)
+                a_pos = [pc.pos for pc in a]
+                if piece.symbol.upper() == self.piece:
+                    if self.takes:
+                        if self.end in a_pos and (
+                                len(move) == 0 or piece.pos[0] == move or piece.pos[1] == move or piece.pos == move):
+                            self.begin = piece.pos
+                    else:
+                        if self.end in r(
+                                len(move) == 0 or piece.pos[0] == move or piece.pos[1] == move or piece.pos == move):
+                            self.begin = piece.pos
+
+    def realize_move(self, move):
+        p = move.piece
+        if not move.white:
+            p = p.lower()
+        to_del = -1
+        if move.takes:
+            if self.en_passant == "":
+                for i, piece in enumerate(self.pieces):
+                    if piece.pos == move.end:
+                        to_del = i
+                        break
+
+            else:
+                for i, piece in enumerate(self.pieces):
+                    if piece.pos == move.en_passant:
+                        to_del = i
+                        break
+            del self.pieces[to_del]
+        for piece in self.pieces:
+            if piece.symbol == p and piece.pos == move.begin:
+                piece.pos = move.end
 
     def readFEN(self, fen):
         self.fen_dict[fen[:-4]] += 1
@@ -265,8 +308,8 @@ class Board:
                     f += 1
 
     def __init__(self):
-        # self.readFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
-        self.readFEN("r3k1nr/1p1bq1p1/2Pp3p/p3pn2/P1B5/2N2N2/1PPQ1PPP/R4RK1 b kq - 0 14")
+        self.readFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
+        # self.readFEN("r3k1nr/1p1bq1p1/2Pp3p/p3pn2/P1B5/2N2N2/1PPQ1PPP/R4RK1 b kq - 0 14")
 
     def piece_type_on_tile(self, tile):
         if tile == "-":
@@ -295,9 +338,7 @@ class Board:
 
 if __name__ == '__main__':
     b = Board()
-    print(b.pieces)
-    print(b)
-    for p in b.pieces:
-        print(p, p.reachable_tiles_and_attackable_pieces(b))
-    m = Board.Move("Bxc6", b)
-    print(m)
+    while True:
+        print(b)
+        m = Board.Move(input("Move: "), b)
+        print(m)
