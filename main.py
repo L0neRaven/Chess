@@ -212,26 +212,26 @@ class Board:
         promotion = ""
 
         def __str__(self):
-            return self.text
+            return self.begin + "-" + self.piece + "->" + self.end
 
         def __init__(self, move, board):
             self.text = move
-            self.white = board.turn == "w"
-            if board.en_passant != "-":
+            self.white = board.turn == "w"  # turn
+            if board.en_passant != "-":     # en passant
                 if board.en_passant[1] == "3":
                     self.en_passant = board.en_passant[0] + "4"
                 else:
                     self.en_passant = board.en_passant[0] + "5"
-            if move[-1] == "#":
+            if move[-1] == "#":             # checkmate
                 self.checkmate = True
                 move = move[:-1]
-            elif move[-1] == "+":
+            elif move[-1] == "+":           # check
                 self.check = True
                 move = move[:-1]
-            if move[-2] == "=":
+            if move[-2] == "=":             # promotion
                 self.promotion = move[-1]
                 move = move[-2]
-            if move == "O-O" or move == "O-O-O":
+            if move == "O-O" or move == "O-O-O":    #castle
                 self.piece = "K"
                 if board.turn == "w":
                     if move == "O-O":
@@ -272,18 +272,20 @@ class Board:
         if not move.white:
             p = p.lower()
         to_del = -1
-        if move.takes:
-            if self.en_passant == "":
+        if move.takes:              # taking...
+            if self.en_passant == "":   # ...normally
                 for i, piece in enumerate(self.pieces):
                     if piece.pos == move.end:
                         to_del = i
                         break
 
-            else:
-                for i, piece in enumerate(self.pieces):
-                    if piece.pos == move.en_passant:
-                        to_del = i
-                        break
+            else:                       # ...with en passant
+                if move.piece == "P" and move.end == self.en_passant:
+                    y_offset = 1 if move.white else -1
+                    for i, piece in enumerate(self.pieces):
+                        if piece.tile_by_vector([0, y_offset]) == self.en_passant:
+                            to_del = i
+                            break
             del self.pieces[to_del]
         for piece in self.pieces:
             if piece.symbol == p and piece.pos == move.begin:
@@ -308,7 +310,8 @@ class Board:
                     f += 1
 
     def __init__(self):
-        self.readFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
+        self.readFEN("rnbqkbnr/ppp2ppp/3p4/4pP2/8/8/PPPPP1PP/RNBQKBNR w KQkq e6 0 3")
+        # self.readFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
         # self.readFEN("r3k1nr/1p1bq1p1/2Pp3p/p3pn2/P1B5/2N2N2/1PPQ1PPP/R4RK1 b kq - 0 14")
 
     def piece_type_on_tile(self, tile):
@@ -338,7 +341,11 @@ class Board:
 
 if __name__ == '__main__':
     b = Board()
-    while True:
-        print(b)
-        m = Board.Move(input("Move: "), b)
-        print(m)
+    # while True:
+    print(b)
+    # for p in b.pieces:
+    #     print(p, p.reachable_tiles_and_attackable_pieces(b))
+    # m = Board.Move(input("Move: "), b)
+    m = Board.Move("fxe6", b)
+    b.realize_move(m)
+    print(m, b, sep="\n\n")
