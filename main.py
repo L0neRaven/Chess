@@ -111,7 +111,7 @@ class Board:
                 if self.symbol == 'K' and 'K' in board.castles:
                     if board.piece_type_on_tile("e2") != 'p' and board.piece_type_on_tile(
                             "g2") != 'p' and board.piece_type_on_tile("f1") == "-" and board.piece_type_on_tile(
-                        "g1") == "-":
+                            "g1") == "-":
                         for piece in board.pieces:
                             if piece.white() != self.white():
                                 [r, a] = piece.reachable_tiles_and_attackable_pieces(board)
@@ -122,7 +122,7 @@ class Board:
                 if self.symbol == 'K' and 'Q' in board.castles:
                     if board.piece_type_on_tile("c2") != 'p' and board.piece_type_on_tile(
                             "e2") != 'p' and board.piece_type_on_tile("c1") == "-" and board.piece_type_on_tile(
-                        "d1") == "-":
+                            "d1") == "-":
                         for piece in board.pieces:
                             if piece.white() != self.white():
                                 [r, a] = piece.reachable_tiles_and_attackable_pieces(board)
@@ -133,7 +133,7 @@ class Board:
                 if self.symbol == 'k' and 'k' in board.castles:
                     if board.piece_type_on_tile("e7") != 'P' and board.piece_type_on_tile(
                             "g7") != 'P' and board.piece_type_on_tile("f8") == "-" and board.piece_type_on_tile(
-                        "g8") == "-":
+                            "g8") == "-":
                         for piece in board.pieces:
                             if piece.white() != self.white():
                                 [r, a] = piece.reachable_tiles_and_attackable_pieces(board)
@@ -144,7 +144,7 @@ class Board:
                 if self.symbol == 'k' and 'q' in board.castles:
                     if board.piece_type_on_tile("c7") != 'P' and board.piece_type_on_tile(
                             "e7") != 'P' and board.piece_type_on_tile("c8") == "-" and board.piece_type_on_tile(
-                        "d8") == "-":
+                            "d8") == "-":
                         for piece in board.pieces:
                             if piece.white() != self.white():
                                 [r, a] = piece.reachable_tiles_and_attackable_pieces(board)
@@ -217,21 +217,21 @@ class Board:
         def __init__(self, move, board):
             self.text = move
             self.white = board.turn == "w"  # turn
-            if board.en_passant != "-":     # en passant
+            if board.en_passant != "-":  # en passant
                 if board.en_passant[1] == "3":
                     self.en_passant = board.en_passant[0] + "4"
                 else:
                     self.en_passant = board.en_passant[0] + "5"
-            if move[-1] == "#":             # checkmate
+            if move[-1] == "#":  # checkmate
                 self.checkmate = True
                 move = move[:-1]
-            elif move[-1] == "+":           # check
+            elif move[-1] == "+":  # check
                 self.check = True
                 move = move[:-1]
-            if move[-2] == "=":             # promotion
+            if move[-2] == "=":  # promotion
                 self.promotion = move[-1]
                 move = move[-2]
-            if move == "O-O" or move == "O-O-O":    #castle
+            if move == "O-O" or move == "O-O-O":  # castle
                 self.piece = "K"
                 if board.turn == "w":
                     if move == "O-O":
@@ -244,12 +244,12 @@ class Board:
                     self.castle = "q"
             self.end = move[-2:]
             move = move[:-2]
-            if move[0] in ['R', 'N', 'B', 'Q', 'K']:
+            if move != "" and move[0] in ['R', 'N', 'B', 'Q', 'K']:
                 self.piece = move[0]
                 move = move[1:]
             else:
                 self.piece = 'P'
-            if move[-1] == "x":
+            if move != "" and move[-1] == "x":
                 self.takes = True
                 move = move[:-1]
             if len(move) > 0:
@@ -257,39 +257,107 @@ class Board:
             for piece in board.pieces:
                 [r, a] = piece.reachable_tiles_and_attackable_pieces(board)
                 a_pos = [pc.pos for pc in a]
-                if piece.symbol.upper() == self.piece:
+                if piece.white() == self.white and piece.symbol.upper() == self.piece:
                     if self.takes:
                         if self.end in a_pos and (
-                                len(move) == 0 or piece.pos[0] == move or piece.pos[1] == move or piece.pos == move):
+                                len(move) == 0 or piece.pos == move or piece.pos[0] == move or piece.pos[
+                                1] == move or (self.end == self.en_passant and self.piece == "P" and self.takes)):
                             self.begin = piece.pos
+                            break
                     else:
-                        if self.end in r(
-                                len(move) == 0 or piece.pos[0] == move or piece.pos[1] == move or piece.pos == move):
+                        if self.end in r and (
+                                len(move) == 0 or piece.pos == move or piece.pos[0] == move or piece.pos[1] == move):
                             self.begin = piece.pos
+                            break
 
     def realize_move(self, move):
         p = move.piece
         if not move.white:
             p = p.lower()
-        to_del = -1
-        if move.takes:              # taking...
-            if self.en_passant == "":   # ...normally
-                for i, piece in enumerate(self.pieces):
-                    if piece.pos == move.end:
-                        to_del = i
-                        break
-
-            else:                       # ...with en passant
-                if move.piece == "P" and move.end == self.en_passant:
-                    y_offset = 1 if move.white else -1
+        if p == 'r':
+            if move.begin == "a8":
+                self.castles = self.castles.replace('q', '')
+            elif move.begin == "h8":
+                self.castles = self.castles.replace('k', '')
+        elif p == 'R':
+            if move.begin == "a1":
+                self.castles = self.castles.replace('Q', '')
+            elif move.begin == "h1":
+                self.castles = self.castles.replace('K', '')
+        elif p == 'k':
+            self.castles = self.castles.replace('q', '')
+            self.castles = self.castles.replace('k', '')
+        elif p == 'K':
+            self.castles = self.castles.replace('Q', '')
+            self.castles = self.castles.replace('K', '')
+        if move.castle != "":
+            if move.castle == 'q':
+                for piece in self.pieces:
+                    if piece.symbol == 'k':
+                        piece.pos = 'c8'
+                    if piece.symbol == 'r' and piece.pos == 'a8':
+                        piece.pos = 'd8'
+                self.castles = self.castles.replace('q', '')
+                self.castles = self.castles.replace('k', '')
+            elif move.castle == 'k':
+                for piece in self.pieces:
+                    if piece.symbol == 'k':
+                        piece.pos = 'g8'
+                    if piece.symbol == 'r' and piece.pos == 'h8':
+                        piece.pos = 'f8'
+                self.castles = self.castles.replace('q', '')
+                self.castles = self.castles.replace('k', '')
+            elif move.castle == 'Q':
+                for piece in self.pieces:
+                    if piece.symbol == 'K':
+                        piece.pos = 'c1'
+                    if piece.symbol == 'r' and piece.pos == 'a1':
+                        piece.pos = 'd1'
+                self.castles = self.castles.replace('Q', '')
+                self.castles = self.castles.replace('Q', '')
+            elif move.castle == 'K':
+                for piece in self.pieces:
+                    if piece.symbol == 'K':
+                        piece.pos = 'g1'
+                    if piece.symbol == 'r' and piece.pos == 'h1':
+                        piece.pos = 'f1'
+                self.castles = self.castles.replace('Q', '')
+                self.castles = self.castles.replace('K', '')
+        else:
+            to_del = -1
+            if move.takes:                                      # taking...
+                if move.piece == "P" and move.end == self.en_passant:   # ...with en passant
                     for i, piece in enumerate(self.pieces):
-                        if piece.tile_by_vector([0, y_offset]) == self.en_passant:
+                        if piece.pos == move.en_passant:
                             to_del = i
                             break
-            del self.pieces[to_del]
-        for piece in self.pieces:
-            if piece.symbol == p and piece.pos == move.begin:
-                piece.pos = move.end
+                else:                                                   # ...normally
+                    for i, piece in enumerate(self.pieces):
+                        if piece.pos == move.end:
+                            if piece.symbol in ['r', 'R']:
+                                if self.turn == 'w':
+                                    self.castles = self.castles.replace('q', '')
+                                    self.castles = self.castles.replace('k', '')
+                                else:
+                                    self.castles = self.castles.replace('Q', '')
+                                    self.castles = self.castles.replace('K', '')
+                            to_del = i
+                            break
+                if to_del != -1:
+                    del self.pieces[to_del]
+            for piece in self.pieces:       # move the piece
+                if piece.symbol == p and (piece.pos == move.begin or piece.pos[0] == move.begin):
+                    piece.pos = move.end
+        if self.turn == "b":
+            self.full_moves += 1
+            self.turn = "w"
+        else:
+            self.turn = "b"
+        if not move.takes and move.piece not in ['p', 'P']:
+            self.half_moves += 1
+        else:
+            self.half_moves = 0
+        self.en_passant = "-"
 
     def readFEN(self, fen):
         self.fen_dict[fen[:-4]] += 1
@@ -297,8 +365,8 @@ class Board:
         self.turn = fen[1]
         self.castles = fen[2]
         self.en_passant = fen[3]
-        self.half_moves = fen[4]
-        self.full_moves = fen[5]
+        self.half_moves = int(fen[4])
+        self.full_moves = int(fen[5])
         fen = fen[0].split("/")
         for r, rank in enumerate(fen):
             f = 0
@@ -310,8 +378,8 @@ class Board:
                     f += 1
 
     def __init__(self):
-        self.readFEN("rnbqkbnr/ppp2ppp/3p4/4pP2/8/8/PPPPP1PP/RNBQKBNR w KQkq e6 0 3")
-        # self.readFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
+        self.readFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
+        # self.readFEN("rnbqkbnr/pppp1ppp/8/4p3/3PP3/8/PPP2PPP/RNBQKBNR b KQkq d3 0 2")
         # self.readFEN("r3k1nr/1p1bq1p1/2Pp3p/p3pn2/P1B5/2N2N2/1PPQ1PPP/R4RK1 b kq - 0 14")
 
     def piece_type_on_tile(self, tile):
@@ -341,11 +409,11 @@ class Board:
 
 if __name__ == '__main__':
     b = Board()
-    # while True:
     print(b)
-    # for p in b.pieces:
-    #     print(p, p.reachable_tiles_and_attackable_pieces(b))
-    # m = Board.Move(input("Move: "), b)
-    m = Board.Move("fxe6", b)
-    b.realize_move(m)
-    print(m, b, sep="\n\n")
+    while True:
+        # for p in b.pieces:
+        #     print(p, p.reachable_tiles_and_attackable_pieces(b))
+        m = Board.Move(input("Move: "), b)
+        # m = Board.Move("fxe6", b)
+        b.realize_move(m)
+        print(m, b, sep="\n\n")
